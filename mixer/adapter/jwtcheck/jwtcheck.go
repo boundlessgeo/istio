@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"istio.io/istio/mixer/adapter/jwtcheck/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/status"
@@ -24,16 +26,20 @@ type (
 		done          chan bool
 		f             *os.File
 		cacheDuration time.Duration
+		key           []byte
 	}
 )
 
 func (b *builder) Build(ctx context.Context, env adapter.Env) (adapter.Handler, error) {
 	file, err := os.Create(b.adapterConfig.FilePath)
+	key := b.adapterConfig.AuthPrivateKey
+	keybytes, _ := loadData(key)
 	h := &handler{
 		env:     env,
 		closing: make(chan bool),
 		done:    make(chan bool),
 		f:       file,
+		key:     keybytes,
 	}
 	h.f.WriteString("meh")
 
@@ -48,16 +54,51 @@ func (b *builder) SetAuthorizationTypes(types map[string]*authorization.Type) {
 // authorization.Handler#HandleAuthorization
 func (h *handler) HandleAuthorization(ctx context.Context, inst *authorization.Instance) (adapter.CheckResult, error) {
 	h.f.WriteString("meh again")
-	s := status.OK
+	tokenstringraw := inst.Action.Properties["Authorization"].(string)
+	tokenstring := parseParam(tokenstringraw)
+	tokenisvalid, claims, _ := parseToken(tokenstring, h.key)
+	s := status.WithPermissionDenied("Token is invalid")
+	if tokenisvalid {
+		s = status.OK
+	}
+
 	h.f.WriteString(fmt.Sprintf(`Handle Authorization invoke for : 
 		Instance Name : '%s'
-		Action Path : '%s'`,
-		inst.Name, inst.Action.Path))
+		Action Path : '%s'
+		Claims : '%v'`,
+		inst.Name, inst.Action.Path, claims))
 	return adapter.CheckResult{
 		Status:        s,
 		ValidDuration: h.cacheDuration,
 		ValidUseCount: 1000000000,
 	}, nil
+}
+
+func loadData(p string) ([]byte, error) {
+	return []byte(p), nil
+}
+
+func parseParam(tokenstringraw string) string {
+	tokenstringtrimmed := strings.Trim(tokenstringraw, " ")
+	tokenstring := strings.Replace(tokenstringtrimmed, "Bearer ", "", 1)
+	return tokenstring
+}
+
+func parseToken(tokenString string, key []byte) (bool, jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return key, nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return ok, claims, nil
+	}
+	return false, nil, err
+
 }
 
 func (h *handler) Close() error {
