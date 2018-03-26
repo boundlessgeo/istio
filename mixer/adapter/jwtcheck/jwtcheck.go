@@ -3,6 +3,7 @@ package jwtcheck
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -54,19 +55,29 @@ func (b *builder) SetAuthorizationTypes(types map[string]*authorization.Type) {
 // authorization.Handler#HandleAuthorization
 func (h *handler) HandleAuthorization(ctx context.Context, inst *authorization.Instance) (adapter.CheckResult, error) {
 	h.f.WriteString("meh again")
-	tokenstringraw := inst.Action.Properties["Authorization"].(string)
-	tokenstring := parseParam(tokenstringraw)
-	tokenisvalid, claims, _ := parseToken(tokenstring, h.key)
+	h.f.WriteString(inst.Action.Method)
+	h.f.WriteString(inst.Action.Path)
+	h.f.WriteString(inst.Action.Service)
+	b, err := json.MarshalIndent(inst.Action.Properties, "", "  ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	h.f.WriteString(string(b))
 	s := status.WithPermissionDenied("Token is invalid")
-	if tokenisvalid {
-		s = status.OK
+	if val, ok := inst.Action.Properties["Authorization"]; ok {
+		tokenstringraw := val.(string)
+		tokenstring := parseParam(tokenstringraw)
+		tokenisvalid, claims, _ := parseToken(tokenstring, h.key)
+		if tokenisvalid {
+			s = status.OK
+			h.f.WriteString(fmt.Sprintf(`Handle Authorization invoke for : 
+				Instance Name : '%s'
+				Action Path : '%s'
+				Claims : '%v'`,
+				inst.Name, inst.Action.Path, claims))
+		}
 	}
 
-	h.f.WriteString(fmt.Sprintf(`Handle Authorization invoke for : 
-		Instance Name : '%s'
-		Action Path : '%s'
-		Claims : '%v'`,
-		inst.Name, inst.Action.Path, claims))
 	return adapter.CheckResult{
 		Status:        s,
 		ValidDuration: h.cacheDuration,
