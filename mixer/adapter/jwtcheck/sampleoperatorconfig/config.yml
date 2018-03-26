@@ -6,6 +6,7 @@ metadata:
   namespace: istio-system
 spec: 
   file_path: "out.txt"
+  auth_private_key: "asfasdf"
 ---
 # instance
 apiVersion: "config.istio.io/v1alpha2"
