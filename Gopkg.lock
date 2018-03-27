@@ -1204,7 +1204,7 @@
   branch = "master"
   name = "istio.io/api"
   packages = [
-    "authentication/v1alpha1",
+    "authentication/v1alpha2",
     "broker/dev",
     "mesh/v1alpha1",
     "mixer/adapter/model/v1beta1",
@@ -1513,6 +1513,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2630239b08bc42774b92e99157414b13ea59db25d6dc92110e8f054713034385"
+  inputs-digest = "33ae347054521928e3f54c6da775a70e6515493945c46a271d89784ff1520144"
   solver-name = "gps-cdcl"
   solver-version = 1
