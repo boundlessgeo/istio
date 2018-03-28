@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package adapter.jwtcheck.config;
+
+import "google/protobuf/duration.proto";
+import "gogoproto/gogo.proto";
+
+option go_package="config";
+
+message Params {
+    // Path of the file to save the information about runtime requests.
+    string file_path = 1;
+    google.protobuf.Duration cache_duration = 2 [(gogoproto.nullable) = false, (gogoproto.stdduration) = true];
+    string auth_private_key = 3;
+}

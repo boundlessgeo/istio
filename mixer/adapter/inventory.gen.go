@@ -21,6 +21,7 @@ import (
 	denier "istio.io/istio/mixer/adapter/denier"
 	dogstatsd "istio.io/istio/mixer/adapter/dogstatsd"
 	fluentd "istio.io/istio/mixer/adapter/fluentd"
+	jwtcheck "istio.io/istio/mixer/adapter/jwtcheck"
 	kubernetesenv "istio.io/istio/mixer/adapter/kubernetesenv"
 	list "istio.io/istio/mixer/adapter/list"
 	memquota "istio.io/istio/mixer/adapter/memquota"
@@ -43,6 +44,7 @@ func Inventory() []adptr.InfoFn {
 		denier.GetInfo,
 		dogstatsd.GetInfo,
 		fluentd.GetInfo,
+		jwtcheck.GetInfo,
 		kubernetesenv.GetInfo,
 		list.GetInfo,
 		memquota.GetInfo,
