@@ -33,7 +33,7 @@ type (
 
 func (b *builder) Build(ctx context.Context, env adapter.Env) (adapter.Handler, error) {
 	file, err := os.Create(b.adapterConfig.FilePath)
-	key := b.adapterConfig.AuthPrivateKey
+	key := b.adapterConfig.Secret
 	keybytes, _ := loadData(key)
 	h := &handler{
 		env:     env,
@@ -55,16 +55,14 @@ func (b *builder) SetAuthorizationTypes(types map[string]*authorization.Type) {
 // authorization.Handler#HandleAuthorization
 func (h *handler) HandleAuthorization(ctx context.Context, inst *authorization.Instance) (adapter.CheckResult, error) {
 	h.f.WriteString("meh again")
-	h.f.WriteString(inst.Action.Method)
-	h.f.WriteString(inst.Action.Path)
-	h.f.WriteString(inst.Action.Service)
-	b, err := json.MarshalIndent(inst.Action.Properties, "", "  ")
+
+	b, err := json.MarshalIndent(inst.Subject.Properties, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
 	}
 	h.f.WriteString(string(b))
 	s := status.WithPermissionDenied("Token is invalid")
-	if val, ok := inst.Action.Properties["Authorization"]; ok {
+	if val, ok := inst.Subject.Properties["Authorization"]; ok {
 		tokenstringraw := val.(string)
 		tokenstring := parseParam(tokenstringraw)
 		tokenisvalid, claims, _ := parseToken(tokenstring, h.key)
@@ -143,6 +141,8 @@ func GetInfo() adapter.Info {
 		NewBuilder: func() adapter.HandlerBuilder { return &builder{} },
 		DefaultConfig: &config.Params{
 			CacheDuration: 60 * time.Second,
+			FilePath:      "out.txt",
+			Secret:        "MONKEY",
 		},
 	}
 }
