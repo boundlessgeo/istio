@@ -66,6 +66,7 @@ func (h *handler) HandleAuthorization(ctx context.Context, inst *authorization.I
 		tokenstringraw := val.(string)
 		tokenstring := parseParam(tokenstringraw)
 		tokenisvalid, claims, _ := parseToken(tokenstring, h.key)
+		h.f.WriteString(fmt.Sprintf(`Is the token valid?: '%v'`, tokenisvalid))
 		if tokenisvalid {
 			s = status.OK
 			h.f.WriteString(fmt.Sprintf(`Handle Authorization invoke for : 
@@ -103,8 +104,10 @@ func parseToken(tokenString string, key []byte) (bool, jwt.MapClaims, error) {
 		return key, nil
 	})
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return ok, claims, nil
+	if token != nil {
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			return ok, claims, nil
+		}
 	}
 	return false, nil, err
 
