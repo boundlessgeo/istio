@@ -1,3 +1,6 @@
 meh again{
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2p3dC1pZHAuZXhhbXBsZS5jb20iLCJzdWIiOiJtYWlsdG86bWlrZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUyMjg2NjE2MywiZXhwIjoxNTIyODY5NzYzLCJpYXQiOjE1MjI4NjYxNjMsImp0aSI6ImlkMTIzNDU2IiwidHlwIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9yZWdpc3RlciJ9.pFmvhEDI0rWi3AID0QC-houf-1CX8XRKrqjlc1X_2zg"
-}
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2p3dC1pZHAuZXhhbXBsZS5jb20iLCJzdWIiOiJtYWlsdG86bWlrZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUyMjk0Mzc4MSwiZXhwIjoxNTIyOTQ3MzgxLCJpYXQiOjE1MjI5NDM3ODEsImp0aSI6ImlkMTIzNDU2IiwidHlwIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9yZWdpc3RlciJ9.7SZZ8mqgkrM67qlKfLoI5XvM0CW1xBD1iA9kGIbjHlc"
+}Handle Authorization invoke for : 
+				Instance Name : ''
+				Action Path : '/test/alpha/beta'
+				Claims : 'map[iss:https://jwt-idp.example.com sub:mailto:mike@example.com nbf:1.522943781e+09 exp:1.522947381e+09 iat:1.522943781e+09 jti:id123456 typ:https://example.com/register]'

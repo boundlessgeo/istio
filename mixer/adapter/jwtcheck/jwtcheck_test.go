@@ -29,10 +29,14 @@ func TestJWTCheckAdapter(t *testing.T) {
 	key := b.adapterConfig.Secret
 	keybytes, _ := loadData(key)
 
-	handler := &handler{env: test.NewEnv(t), closing: make(chan bool), done: make(chan bool), f: file, cacheDuration: 1000, key: keybytes}
-	m := map[string]interface{}{"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2p3dC1pZHAuZXhhbXBsZS5jb20iLCJzdWIiOiJtYWlsdG86bWlrZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUyMjg2NjE2MywiZXhwIjoxNTIyODY5NzYzLCJpYXQiOjE1MjI4NjYxNjMsImp0aSI6ImlkMTIzNDU2IiwidHlwIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9yZWdpc3RlciJ9.pFmvhEDI0rWi3AID0QC-houf-1CX8XRKrqjlc1X_2zg"}
+	s := test.NewEnv(t)
+
+	handler := &handler{env: s, closing: make(chan bool), done: make(chan bool), f: file, cacheDuration: 1000, key: keybytes}
+	m := map[string]interface{}{"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2p3dC1pZHAuZXhhbXBsZS5jb20iLCJzdWIiOiJtYWlsdG86bWlrZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUyMjk0Mzc4MSwiZXhwIjoxNTIyOTQ3MzgxLCJpYXQiOjE1MjI5NDM3ODEsImp0aSI6ImlkMTIzNDU2IiwidHlwIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9yZWdpc3RlciJ9.7SZZ8mqgkrM67qlKfLoI5XvM0CW1xBD1iA9kGIbjHlc"}
 	subject := authorization.Subject{User: "John", Groups: "first,second", Properties: m}
-	instance := authorization.Instance{Subject: &subject}
+	n := map[string]interface{}{"Actionproperty1": "actionpropertyvalue1"}
+	action := authorization.Action{Namespace: "testnamespace", Service: "testservice", Method: "GET", Path: "/test/alpha/beta", Properties: n}
+	instance := authorization.Instance{Subject: &subject, Action: &action}
 	result, autherror := handler.HandleAuthorization(context.Background(), &instance)
 	fmt.Printf("%v\n", result)
 	if autherror != nil {
