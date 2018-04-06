@@ -4,9 +4,8 @@ package jwtcheck
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -25,26 +24,22 @@ type (
 		env           adapter.Env
 		closing       chan bool
 		done          chan bool
-		f             *os.File
 		cacheDuration time.Duration
 		key           []byte
 	}
 )
 
 func (b *builder) Build(ctx context.Context, env adapter.Env) (adapter.Handler, error) {
-	file, err := os.Create(b.adapterConfig.FilePath)
 	key := b.adapterConfig.Secret
 	keybytes, _ := loadData(key)
 	h := &handler{
 		env:     env,
 		closing: make(chan bool),
 		done:    make(chan bool),
-		f:       file,
 		key:     keybytes,
 	}
-	h.f.WriteString("meh")
 
-	return h, err
+	return h, nil
 }
 
 // adapter.HandlerBuilder#SetAuthorizationTypes
@@ -54,22 +49,19 @@ func (b *builder) SetAuthorizationTypes(types map[string]*authorization.Type) {
 ////////////////// Request-time Methods //////////////////////////
 // authorization.Handler#HandleAuthorization
 func (h *handler) HandleAuthorization(ctx context.Context, inst *authorization.Instance) (adapter.CheckResult, error) {
-	h.f.WriteString("meh again")
 
-	b, err := json.MarshalIndent(inst.Subject.Properties, "", "  ")
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-	h.f.WriteString(string(b))
+	b, _ := json.MarshalIndent(inst.Subject.Properties, "", "  ")
+
+	t := time.Now()
+	h.env.Logger().Infof(`Request Processed at %s with the following subject properties: %s`, t.String(), b)
 	s := status.WithPermissionDenied("Token is invalid")
 	if val, ok := inst.Subject.Properties["Authorization"]; ok {
 		tokenstringraw := val.(string)
 		tokenstring := parseParam(tokenstringraw)
 		tokenisvalid, claims, _ := parseToken(tokenstring, h.key)
-		h.f.WriteString(fmt.Sprintf(`Is the token valid?: '%v'`, tokenisvalid))
 		if tokenisvalid {
 			s = status.OK
-			h.f.WriteString(fmt.Sprintf(`Handle Authorization invoke for : 
+			h.env.Logger().Infof(fmt.Sprintf(`Handle Authorization invoke for : 
 				Instance Name : '%s'
 				Action Path : '%s'
 				Claims : '%v'`,
@@ -118,7 +110,7 @@ func (h *handler) Close() error {
 	close(h.closing)
 
 	<-h.done
-	return h.f.Close()
+	return nil
 }
 
 func (b *builder) SetAdapterConfig(cfg adapter.Config) {
@@ -126,8 +118,8 @@ func (b *builder) SetAdapterConfig(cfg adapter.Config) {
 }
 
 func (b *builder) Validate() (ce *adapter.ConfigErrors) {
-	if _, err := filepath.Abs(b.adapterConfig.FilePath); err != nil {
-		ce = ce.Append("file_path", err)
+	if len(b.adapterConfig.Secret) < 1 {
+		ce = ce.Append("Secret", errors.New("Secret must be populated"))
 	}
 	return
 }
@@ -144,7 +136,6 @@ func GetInfo() adapter.Info {
 		NewBuilder: func() adapter.HandlerBuilder { return &builder{} },
 		DefaultConfig: &config.Params{
 			CacheDuration: 60 * time.Second,
-			FilePath:      "out.txt",
 			Secret:        "MONKEY",
 		},
 	}
